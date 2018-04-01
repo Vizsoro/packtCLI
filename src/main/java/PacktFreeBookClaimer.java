@@ -1,43 +1,44 @@
 
-import com.gargoylesoftware.htmlunit.ImmediateRefreshHandler;
-import com.gargoylesoftware.htmlunit.Page;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.CookieManager;
+import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.WebResponse;
-import com.gargoylesoftware.htmlunit.WebWindow;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.DomElement;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
+import com.gargoylesoftware.htmlunit.util.Cookie;
 
 public class PacktFreeBookClaimer {
 	public static void main(String[] args) throws Exception {
-		WebClient webClient = new WebClient();
-		webClient.setRefreshHandler(new
-				ImmediateRefreshHandler());
-		HtmlPage page = webClient.getPage("https://www.packtpub.com/packt/offers/free-learning");
-		WebWindow enclosingWindow = page.getEnclosingWindow();
-		HtmlForm loginForm = (HtmlForm)page.getElementById("packt-user-login-form");
-		HtmlInput email = loginForm.getInputByName("email");
-		HtmlInput password = loginForm.getInputByName("password");
-		HtmlInput loginSubmit = loginForm.getInputByName("op");
-		email.type(args[0]);
-		password.type(args[1]);
-		page = loginSubmit.click();
+		WebClient webClient = new WebClient(BrowserVersion.FIREFOX_52);
+		JavaScriptEngine javaScriptEngine = new JavaScriptEngine(webClient);
+		webClient.setJavaScriptEngine(javaScriptEngine);
+		CookieManager cookieManager = new CookieManager();
+		webClient.setCookieManager(cookieManager);
+		cookieManager.getCookies();
+		WebRequest webRequest = new WebRequest(new URL("https://www.packtpub.com/"));
+		webRequest.setHttpMethod(HttpMethod.POST);
+		webRequest.setRequestBody("{\n"
+				+ "  \"email\": \"vizsoro@gmail.com\",\n"
+				+ "  \"password\": \"Almafa123\"\n"
+				+ "}");
+		HtmlPage page = webClient.getPage(webRequest);
+		Set<Cookie> cookies = cookieManager.getCookies();
+		WebRequest webRequest2 = new WebRequest(new URL("https://www.packtpub.com//packt/offers/free-learning?login=1"));
+		webRequest2.setHttpMethod(HttpMethod.GET);
+		Map<String, String> additionalHeader = new HashMap<>();
+		cookies.forEach(c->additionalHeader.putIfAbsent(c.getName(), c.getValue()));
+		webRequest2.setAdditionalHeaders(additionalHeader);
+		page = webClient.getPage(webRequest);
 		DomElement elementById = page.getElementById("free-learning-claim");
+		
 		elementById.click();
-//		DomElement elementById = afterLogin.getElementById("free-learning-claim");
-//		afterLogin.refresh();
-		//		HtmlInput searchBox = page.getElementByName("q");
-//		searchBox.setValueAttribute("htmlunit");
-//
-//		HtmlSubmitInput googleSearchSubmitButton =
-//				page.getElementByName("btnG"); // sometimes it's "btnK"
-//		page=googleSearchSubmitButton.click();
-//
-//		HtmlDivision resultStatsDiv =
-//				page.getFirstByXPath("//div[@id='resultStats']");
-//
-//		System.out.println(resultStatsDiv.asText()); // About 309,000 results
 		webClient.close();
 	}
 	
